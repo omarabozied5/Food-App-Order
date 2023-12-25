@@ -1,36 +1,65 @@
-import React from 'react'
+import { useEffect , useState } from 'react';
 import classes from './AvailableMeals.module.css'
 import MealItem from './MealItem/MealItem';
 import Card from '../UI/Card';
 
-const DUMMY_MEALS = [
-    {
-      id: 'm1',
-      name: 'Sushi',
-      description: 'Finest fish and veggies',
-      price: 22.99,
-    },
-    {
-      id: 'm2',
-      name: 'Schnitzel',
-      description: 'A german specialty!',
-      price: 16.5,
-    },
-    {
-      id: 'm3',
-      name: 'Barbecue Burger',
-      description: 'American, raw, meaty',
-      price: 12.99,
-    },
-    {
-      id: 'm4',
-      name: 'Green Bowl',
-      description: 'Healthy...and green...',
-      price: 18.99,
-    },
-  ];
+
 const AvailableMeals = () => {
-    const DummyMeals = DUMMY_MEALS.map((meal) => <MealItem 
+  const [meals , setMeals] = useState([]);
+  const [isLoading , setIsLoading] = useState(true);
+  const [httpReq , setHttpReq] = useState();
+
+    useEffect(() =>{
+      const fetchMeals =  async () => {
+      const response = await fetch('https://httpreq-2aed1-default-rtdb.firebaseio.com/meals.json')
+      const responseData = await response.json();
+
+      if(!response.ok)
+      {
+        throw new Error('Something went wrong !')
+      }
+
+      const loadedData = [];
+
+      for (const key in responseData){
+        loadedData.push({
+          id : key,
+          name : responseData[key].name ,
+          description : responseData[key].description,
+          price : responseData[key].price,
+        })
+      };
+      setMeals(loadedData);
+      setIsLoading(false);
+    }
+    fetchMeals().catch(error =>
+      {
+        setIsLoading(false);
+        setHttpReq(error.message)
+      }
+
+    );
+    },[]);
+
+    if(isLoading)
+    {
+      return (
+        <section className={classes.MealsLoading}>
+          <p>Loading...</p>
+        </section>
+      )
+    }
+    if(httpReq)
+    {
+      return (
+        <section className={classes.MealsError}>
+          <p>Faild to fetch!!!</p>
+        </section>
+      )
+    }
+
+
+    const mealsList = meals.map((meal) => <MealItem 
         key={meal.id}
         id ={meal.id}
         name={meal.name}
@@ -41,7 +70,7 @@ const AvailableMeals = () => {
     <section className={classes.meals}>
       <Card>
     
-        <ul>{DummyMeals}</ul>
+        <ul>{mealsList}</ul>
    
       </Card>
     </section>
